@@ -1,28 +1,36 @@
-import json
+import sqlite3
 import os
 
+conn = sqlite3.connect("data.db")
+cur = conn.cursor()
+
+cur.execute("""
+    Create Table if not exists videos(
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        time TEXT NOT NULL
+    )        
+""")
 
 def main():
-    videos_list = load_videoList()
+    print("*" * 50)
     print("1. List Data")
     print("2. Add Data")
     print("3. Update Data")
     print("4. Remove Data")
     print("5. Exit")
+    print("*" * 50)
     while True:
         userinput = input("Enter your Choise: ")
         match userinput:
             case "1":
-                list_data(videos_list)
+                list_data()
             case "2":
-                name = input("Enter name: ")
-                time = input("Enter time: ")
-                d = {"name":name, "time":time}
-                videos_list = AddData(d, videos_list)
+                AddData()
             case "3":
-                videos_list = update(videos_list)
+                updateData()
             case "4":
-                videos_list = deleteData(videos_list)
+                deleteData()
             case "5" | "exit":
                 print("Closing Program....")
                 break
@@ -30,67 +38,52 @@ def main():
                 os.system('clear')
             case "cls":
                 os.system('cls')
+            case "help":
+                print("*" * 50)
+                print("1. List Data")
+                print("2. Add Data")
+                print("3. Update Data")
+                print("4. Remove Data")
+                print("5. Exit")
+                print("*" * 50)
             case _:
                 print("Invalid input")
 
-def load_videoList():
-    try:
-        with open("data.txt", 'r') as file:
-            list = json.load(file)
-            data = []
-            for k, v in enumerate(list, start=1):
-                data.append(v)
-            return list                
-    except FileNotFoundError:
-        return []
-    
-def list_data(videos):
-    print()
-    print("*" * 50)
-    for k, v in enumerate(videos, start=1):
-        print(f"{k}. Name: {v["name"]}, time: {v["time"]}")
-    print("*" * 50)
-    print()
+    conn.close()
 
-def saveDate(list):
-    try:
-       with open("data.txt", 'w') as file:
-            json.dump(list, file)
-    except:
-        print("something went wrong saving data")
+def list_data():
+    cur.execute("SELECT * from videos")
+    list = cur.fetchall()
+    if len(list) == 0:
+        print("NO records")
+        return
+    for data in list:
+        print(f"ID: {data[0]}, Name: {data[1]}, Time: {data[2]}")
     
-    
-def AddData(data, list):
-    list.append(data)
-    saveDate(list)
-    return list
+def AddData():
+    print("Enter name and Time")
+    name = input("Enter name: ")
+    time = input("Enter time: ")
+    cur.execute("INSERT INTO videos (name, time) VALUES (?, ?)", (name, time))
+    conn.commit()
 
-def update(list):
-    print()
-    print("*" * 50)
-    try:
-        i = int(input("Enter Id: "))
-        name = input("Enter name: ")
-        time = input("Enter time: ")
-        d = {"name":name, "time":time}
-        list[i-1] = d
-        saveDate(list)
-    except:
-        print("Wrong agrument")
-    print("*" * 50)
-    print() 
-    return list  
-  
-def deleteData(list):
-    try:
-        i = int(input("Enter id: "))  
-        list.pop(i-1)
-        saveDate(list)
-    except:
-        print("something went wrong")
-    finally:
-        return list
+def updateData():
+    id = input("Enter ID of Video to be updated: ")
+    name = input("Enter name: ")
+    time = input("Enter time: ")
+    cur.execute("""
+        UPDATE videos
+        set name = ?, time = ?
+        where id = ?        
+        """, (name, time, id))
+    conn.commit()
 
+
+def deleteData():
+    print("Enter id then, name and Time")
+    id = input("Enter ID of Video to be Deleted: ")
+    cur.execute("delete from videos where id = ?", (id, )) # if only one value we have to put tralling comma
+    conn.commit()
 
 if __name__ == "__main__":
     main()
