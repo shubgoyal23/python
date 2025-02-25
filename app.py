@@ -6,7 +6,7 @@ cur = conn.cursor()
 
 cur.execute("""
     Create Table if not exists videos(
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         time TEXT NOT NULL
     )        
